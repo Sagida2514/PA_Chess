@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public enum ChessPieceType
@@ -11,7 +12,7 @@ public enum ChessPieceType
     King = 6,
 }
 
-public class ChessPiece : MonoBehaviour
+public abstract class ChessPiece : MonoBehaviour
 {
     public int team;
     public int currentX;
@@ -27,6 +28,8 @@ public class ChessPiece : MonoBehaviour
         transform.localScale = Vector3.Lerp(transform.localScale, desiredScale, Time.deltaTime * 10);
     }
 
+    public abstract List<Vector2Int> GetAvailableMoves(ref ChessPiece[,] board, int tileCountX, int tileCountY);
+
     public virtual void SetPosition(Vector3 position, bool force = false)
     {
         desiredPosition = position;
@@ -41,4 +44,5 @@ public class ChessPiece : MonoBehaviour
         if (force)
             transform.localScale = desiredScale;
     }
+    
 }

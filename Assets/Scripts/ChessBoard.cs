@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -7,6 +8,10 @@ public class ChessBoard : MonoBehaviour
     [SerializeField] private float tileSize = 1.0f;
     [SerializeField] private float yOffset = 0.2f;
     [SerializeField] private Vector3 boardCenter = Vector3.zero;
+    [SerializeField] private float deathSize = 0.3f;
+    [SerializeField] private float deadSpacing = 0.3f;
+    [SerializeField] private float dragOffset = 1f;
+    [SerializeField] private GameObject victoryScreen;
 
     [Header("프리팹 & 머터리얼")] [SerializeField]
     private GameObject[] prefabs;
@@ -15,15 +20,20 @@ public class ChessBoard : MonoBehaviour
 
     private ChessPiece[,] chessPieces;
     private ChessPiece currentlyDragging;
+    private List<Vector2Int> availableMoves = new List<Vector2Int>();
+    private List<ChessPiece> deadWhites = new List<ChessPiece>();
+    private List<ChessPiece> deadBlacks = new List<ChessPiece>();
     private const int TILE_COUNT_X = 8;
     private const int TILE_COUNT_Y = 8;
     private GameObject[,] tiles;
     private Camera currentCamera;
     private Vector2Int currentHover;
     private Vector3 bounds;
+    private int turn;
 
     private void Awake()
     {
+        turn = 0;
         GenerateAllTiles(tileSize, TILE_COUNT_X, TILE_COUNT_Y);
         SpawnAllPieces();
         PositionAllPieces();
@@ -39,22 +49,22 @@ public class ChessBoard : MonoBehaviour
 
         RaycastHit info;
         Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover")))
+        if (Physics.Raycast(ray, out info, 100, LayerMask.GetMask("Tile", "Hover", "Highlight")))
         {
             // 레이캐스팅된 타일의 인덱스를 가져온다.
             Vector2Int hitPosition = LookupTileIndex(info.collider.gameObject);
 
-            // 현재 호버링중이지 않으면 호버링하기
             if (currentHover == -Vector2Int.one)
             {
                 currentHover = hitPosition;
                 tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
             }
 
-            // 만약에 이미 호버링중인 상태였다면 기물을 교체한다
             if (currentHover != hitPosition)
             {
-                tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
+                tiles[currentHover.x, currentHover.y].layer = (ContainsValidMove(ref availableMoves, currentHover))
+                    ? LayerMask.NameToLayer("Highlight")
+                    : LayerMask.NameToLayer("Tile");
                 currentHover = hitPosition;
                 tiles[hitPosition.x, hitPosition.y].layer = LayerMask.NameToLayer("Hover");
             }
@@ -64,9 +74,14 @@ public class ChessBoard : MonoBehaviour
                 if (chessPieces[hitPosition.x, hitPosition.y] != null)
                 {
                     // 현재 우리 턴이면
-                    if (true)
+                    if (chessPieces[hitPosition.x, hitPosition.y].team == turn)
                     {
                         currentlyDragging = chessPieces[hitPosition.x, hitPosition.y];
+
+                        // 갈수 있는 곳에 대한 정보를 받아서 하이라이팅 한다.
+                        availableMoves =
+                            currentlyDragging.GetAvailableMoves(ref chessPieces, TILE_COUNT_X, TILE_COUNT_Y);
+                        HighlightTiles();
                     }
                 }
             }
@@ -76,24 +91,40 @@ public class ChessBoard : MonoBehaviour
                 Vector2Int previousPosition = new Vector2Int(currentlyDragging.currentX, currentlyDragging.currentY);
 
                 bool vaildMove = MoveTo(currentlyDragging, hitPosition.x, hitPosition.y);
-
                 if (!vaildMove)
                 {
                     currentlyDragging.SetPosition(GetTileCenter(previousPosition.x, previousPosition.y));
-                    currentlyDragging = null;
                 }
-                else
-                {
-                    currentlyDragging = null;
-                }
+
+                currentlyDragging = null;
+                RemoveHighlightTiles();
             }
         }
         else
         {
             if (currentHover != -Vector2Int.one)
             {
-                tiles[currentHover.x, currentHover.y].layer = LayerMask.NameToLayer("Tile");
+                tiles[currentHover.x, currentHover.y].layer = (ContainsValidMove(ref availableMoves, currentHover))
+                    ? LayerMask.NameToLayer("Highlight")
+                    : LayerMask.NameToLayer("Tile");
                 currentHover = -Vector2Int.one;
+            }
+
+            if (currentlyDragging && Input.GetMouseButtonUp(0))
+            {
+                currentlyDragging.SetPosition(GetTileCenter(currentlyDragging.currentX, currentlyDragging.currentY));
+                currentlyDragging = null;
+                RemoveHighlightTiles();
+            }
+        }
+
+        if (currentlyDragging)
+        {
+            Plane horizontalPlane = new Plane(Vector3.up, Vector3.up * yOffset);
+            float distance = 0.0f;
+            if (horizontalPlane.Raycast(ray, out distance))
+            {
+                currentlyDragging.SetPosition(ray.GetPoint(distance) + Vector3.up * dragOffset);
             }
         }
     }
@@ -211,11 +242,63 @@ public class ChessBoard : MonoBehaviour
         return new Vector3(x * tileSize, yOffset, y * tileSize) - bounds + new Vector3(tileSize / 2, 0, tileSize / 2);
     }
 
+    private void HighlightTiles()
+    {
+        for (int i = 0; i < availableMoves.Count; i++)
+        {
+            tiles[availableMoves[i].x, availableMoves[i].y].layer = LayerMask.NameToLayer("Highlight");
+        }
+    }
+
+    private void RemoveHighlightTiles()
+    {
+        for (int i = 0; i < availableMoves.Count; i++)
+        {
+            tiles[availableMoves[i].x, availableMoves[i].y].layer = LayerMask.NameToLayer("Tile");
+        }
+
+        availableMoves.Clear();
+    }
+
+    private void CheckMate(int team)
+    {
+        DisplayVictory(team);
+    }
+
+    private void DisplayVictory(int winningTeam)
+    {
+        victoryScreen.SetActive(true);
+        victoryScreen.transform.GetChild(winningTeam).gameObject.SetActive(true);
+    }
+
+    public void OnResetButton()
+    {
+    }
+
+    public void OnExitButton()
+    {
+        Application.Quit();
+    }
+
 
     // 각종 연산
 
+    private bool ContainsValidMove(ref List<Vector2Int> moves, Vector2 pos)
+    {
+        for (int i = 0; i < moves.Count; i++)
+        {
+            if (moves[i].x == pos.x && moves[i].y == pos.y)
+                return true;
+        }
+
+        return false;
+    }
+
     private bool MoveTo(ChessPiece cp, int x, int y)
     {
+        if (ContainsValidMove(ref availableMoves, new Vector2(x, y)) == false)
+            return false;
+
         Vector2Int previousPosition = new Vector2Int(cp.currentX, cp.currentY);
 
         if (chessPieces[x, y] != null)
@@ -227,6 +310,29 @@ public class ChessBoard : MonoBehaviour
             {
                 return false;
             }
+
+            if (ocp.team == 0)
+            {
+                if (ocp.type == ChessPieceType.King)
+                    CheckMate(1);
+
+                deadWhites.Add(ocp);
+                ocp.SetScale(Vector3.one * deathSize);
+                ocp.SetPosition(new Vector3(8 * tileSize, yOffset, -1 * tileSize) - bounds +
+                                new Vector3(tileSize / 2, 0, tileSize / 2) +
+                                (Vector3.forward * deadSpacing) * (deadWhites.Count - 1));
+            }
+            else
+            {
+                if (ocp.type == ChessPieceType.King)
+                    CheckMate(0);
+
+                deadBlacks.Add(ocp);
+                ocp.SetScale(Vector3.one * deathSize);
+                ocp.SetPosition(new Vector3(-1 * tileSize, yOffset, 8 * tileSize) - bounds +
+                                new Vector3(tileSize / 2, 0, tileSize / 2) +
+                                (Vector3.back * deadSpacing) * (deadBlacks.Count - 1));
+            }
         }
 
         chessPieces[x, y] = cp;
@@ -234,6 +340,7 @@ public class ChessBoard : MonoBehaviour
 
         PositionSinglePiece(x, y);
 
+        turn = (turn + 1) % 2;
         return true;
     }
 
