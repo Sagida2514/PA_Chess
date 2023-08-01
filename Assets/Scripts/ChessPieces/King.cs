@@ -10,7 +10,7 @@ public class King : ChessPiece
     public override List<Vector2Int> GetAvailableMoves(ref ChessPiece[,] board, int tileCountX, int tileCountY)
     {
         r.Clear();
-        
+
         for (int i = 0; i < 8; i++)
         {
             CheckCandidates(i, ref board, tileCountX, tileCountY);
@@ -45,5 +45,46 @@ public class King : ChessPiece
                 break;
             }
         }
+    }
+
+    public override SpecialMove GetSpecialMoves(ref ChessPiece[,] board, ref List<Vector2Int[]> moveList,
+        ref List<Vector2Int> availableMoves)
+    {
+        SpecialMove r = SpecialMove.None;
+
+        var kingMove = moveList.Find(m => m[0].x == 4 && m[0].y == ((team == 0) ? 0 : 7));
+        var leftRookMove = moveList.Find(m => m[0].x == 0 && m[0].y == ((team == 0) ? 0 : 7));
+        var rightRookMove = moveList.Find(m => m[0].x == 7 && m[0].y == ((team == 0) ? 0 : 7));
+
+        if (kingMove == null && currentX == 4)
+        {
+            int Ypos = team == 0 ? 0 : 7;
+
+            if (leftRookMove == null)
+            {
+                if (board[0, Ypos] != null && board[0, Ypos].type == ChessPieceType.Rook && board[0, Ypos].team == team)
+                {
+                    if (board[1, Ypos] == null && board[2, Ypos] == null && board[3, Ypos] == null)
+                    {
+                        availableMoves.Add(new Vector2Int(2, Ypos));
+                        r = SpecialMove.Castling;
+                    }
+                }
+            }
+
+            if (rightRookMove == null)
+            {
+                if (board[7, Ypos] != null && board[7, Ypos].type == ChessPieceType.Rook && board[7, Ypos].team == team)
+                {
+                    if (board[5, Ypos] == null && board[6, Ypos] == null)
+                    {
+                        availableMoves.Add(new Vector2Int(6, Ypos));
+                        r = SpecialMove.Castling;
+                    }
+                }
+            }
+        }
+
+        return r;
     }
 }

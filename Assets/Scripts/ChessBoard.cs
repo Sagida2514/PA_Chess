@@ -199,8 +199,8 @@ public class ChessBoard : MonoBehaviour
         chessPieces[0, 0] = SpawnSinglePiece(ChessPieceType.Rook, whiteTeam);
         chessPieces[1, 0] = SpawnSinglePiece(ChessPieceType.Knight, whiteTeam);
         chessPieces[2, 0] = SpawnSinglePiece(ChessPieceType.Bishop, whiteTeam);
-        chessPieces[3, 0] = SpawnSinglePiece(ChessPieceType.King, whiteTeam);
-        chessPieces[4, 0] = SpawnSinglePiece(ChessPieceType.Queen, whiteTeam);
+        chessPieces[3, 0] = SpawnSinglePiece(ChessPieceType.Queen, whiteTeam);
+        chessPieces[4, 0] = SpawnSinglePiece(ChessPieceType.King, whiteTeam);
         chessPieces[5, 0] = SpawnSinglePiece(ChessPieceType.Bishop, whiteTeam);
         chessPieces[6, 0] = SpawnSinglePiece(ChessPieceType.Knight, whiteTeam);
         chessPieces[7, 0] = SpawnSinglePiece(ChessPieceType.Rook, whiteTeam);
@@ -212,8 +212,8 @@ public class ChessBoard : MonoBehaviour
         chessPieces[0, 7] = SpawnSinglePiece(ChessPieceType.Rook, blackTeam);
         chessPieces[1, 7] = SpawnSinglePiece(ChessPieceType.Knight, blackTeam);
         chessPieces[2, 7] = SpawnSinglePiece(ChessPieceType.Bishop, blackTeam);
-        chessPieces[3, 7] = SpawnSinglePiece(ChessPieceType.King, blackTeam);
-        chessPieces[4, 7] = SpawnSinglePiece(ChessPieceType.Queen, blackTeam);
+        chessPieces[3, 7] = SpawnSinglePiece(ChessPieceType.Queen, blackTeam);
+        chessPieces[4, 7] = SpawnSinglePiece(ChessPieceType.King, blackTeam);
         chessPieces[5, 7] = SpawnSinglePiece(ChessPieceType.Bishop, blackTeam);
         chessPieces[6, 7] = SpawnSinglePiece(ChessPieceType.Knight, blackTeam);
         chessPieces[7, 7] = SpawnSinglePiece(ChessPieceType.Rook, blackTeam);
@@ -364,6 +364,53 @@ public class ChessBoard : MonoBehaviour
                     }
 
                     chessPieces[enemyPawn.currentX, enemyPawn.currentY] = null;
+                }
+            }
+        }
+
+        if (specialMove == SpecialMove.Castling)
+        {
+            var lastMove = moveList[moveList.Count - 1];
+
+            // 왼쪽 룩 캐슬링
+            if (lastMove[1].x == 2)
+            {
+                // 흰색
+                if (lastMove[1].y == 0)
+                {
+                    ChessPiece rook = chessPieces[0, 0];
+                    chessPieces[3, 0] = rook;
+                    PositionSinglePiece(3, 0);
+                    chessPieces[0, 0] = null;
+                }
+                // 흑색
+                else if (lastMove[1].y == 7)
+                {
+                    ChessPiece rook = chessPieces[0, 7];
+                    chessPieces[3, 7] = rook;
+                    PositionSinglePiece(3, 7);
+                    chessPieces[0, 7] = null;
+                }
+            }
+
+            // 오른쪽 룩 캐슬링
+            if (lastMove[1].x == 6)
+            {
+                // 흰색
+                if (lastMove[1].y == 0)
+                {
+                    ChessPiece rook = chessPieces[7, 0];
+                    chessPieces[5, 0] = rook;
+                    PositionSinglePiece(5, 0);
+                    chessPieces[7, 0] = null;
+                }
+                // 흑색
+                else if (lastMove[1].y == 7)
+                {
+                    ChessPiece rook = chessPieces[7, 7];
+                    chessPieces[5, 7] = rook;
+                    PositionSinglePiece(5, 7);
+                    chessPieces[7, 7] = null;
                 }
             }
         }
