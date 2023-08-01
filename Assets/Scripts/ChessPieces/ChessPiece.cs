@@ -36,6 +36,12 @@ public abstract class ChessPiece : MonoBehaviour
         transform.localScale = Vector3.Lerp(transform.localScale, desiredScale, Time.deltaTime * 10);
     }
 
+    public virtual SpecialMove GetSpecialMoves(ref ChessPiece[,] board, ref List<Vector2Int[]> moveList,
+        ref List<Vector2Int> availableMoves)
+    {
+        return SpecialMove.None;
+    }
+
     public abstract List<Vector2Int> GetAvailableMoves(ref ChessPiece[,] board, int tileCountX, int tileCountY);
 
     public virtual void SetPosition(Vector3 position, bool force = false)
