@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using System.Numerics;
 using UnityEngine;
+using Quaternion = UnityEngine.Quaternion;
+using Vector3 = UnityEngine.Vector3;
 
 public enum ChessPieceType
 {
@@ -21,6 +24,11 @@ public abstract class ChessPiece : MonoBehaviour
 
     private Vector3 desiredPosition;
     private Vector3 desiredScale = Vector3.one;
+
+    private void Start()
+    {
+        transform.rotation = Quaternion.Euler((team == 0) ? Vector3.zero : new Vector3(0, 180, 0));
+    }
 
     private void Update()
     {
@@ -44,5 +52,4 @@ public abstract class ChessPiece : MonoBehaviour
         if (force)
             transform.localScale = desiredScale;
     }
-    
 }
