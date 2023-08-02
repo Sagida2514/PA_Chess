@@ -3,24 +3,23 @@ using UnityEngine;
 
 public class King : ChessPiece
 {
-    List<Vector2Int> r = new List<Vector2Int>();
     private int[] dx = new[] { 1, 1, -1, -1, 1, -1, 0, 0 };
     private int[] dy = new[] { 1, -1, 1, -1, 0, 0, 1, -1 };
 
     public override List<Vector2Int> GetAvailableMoves(ref ChessPiece[,] board, int tileCountX, int tileCountY)
     {
-        r.Clear();
+        List<Vector2Int> r = new List<Vector2Int>();
 
         for (int i = 0; i < 8; i++)
         {
-            CheckCandidates(i, ref board, tileCountX, tileCountY);
+            CheckCandidates(i, r, ref board, tileCountX, tileCountY);
         }
 
         return r;
     }
 
 
-    public void CheckCandidates(int index, ref ChessPiece[,] board, int tileCountX, int tileCountY)
+    public void CheckCandidates(int index, List<Vector2Int> r, ref ChessPiece[,] board, int tileCountX, int tileCountY)
     {
         int dX = dx[index];
         int dY = dy[index];
