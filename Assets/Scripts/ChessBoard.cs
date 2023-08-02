@@ -576,7 +576,7 @@ public class ChessBoard : MonoBehaviour
                     defendingPieces[i].GetAvailableMoves(ref chessPieces, TILE_COUNT_X, TILE_COUNT_Y);
                 SimulateMoveForSinglePiece(defendingPieces[i], ref defendingMoves, targetKing);
 
-                if (defendingPieces.Count != 0)
+                if (defendingMoves.Count != 0)
                     return false;
             }
 
@@ -651,7 +651,7 @@ public class ChessBoard : MonoBehaviour
 
         if (CheckForCheckmate())
         {
-            //CheckMate(cp.team);
+            CheckMate(cp.team);
         }
 
         return true;
