@@ -82,7 +82,7 @@ public class Client : MonoBehaviour
         {
             if (cmd == NetworkEvent.Type.Connect)
             {
-                //SendToServer(new NetWelCome());
+                SendToServer(new NetWelcome());
                 Debug.Log("연결 성공!");
             }
             else if (cmd == NetworkEvent.Type.Data)
